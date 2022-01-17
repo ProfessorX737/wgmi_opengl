@@ -8,6 +8,6 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
 
 include(copy_resources)
 
+set(COMMON_LIBS glfw glm glad stb chicken3421 tinyobjloader)
 add_subdirectory(lib)
-set(COMMON_LIBS glfw glm glad stb chicken3421)
 add_subdirectory(apps)

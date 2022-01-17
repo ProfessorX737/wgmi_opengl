@@ -1,0 +1,6 @@
+*build*/
+bin/
+.clang-format
+.clang-tidy
+.vscode/
+.idea/

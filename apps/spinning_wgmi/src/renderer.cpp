@@ -4,6 +4,7 @@
 #include "mesh.hpp"
 
 #include "chicken3421/chicken3421.hpp"
+#include <iostream>
 
 const char *VERT_PATH = "res/shaders/shader.vert";
 const char *FRAG_PATH = "res/shaders/shader.frag";
@@ -52,7 +53,7 @@ namespace renderer {
 
     renderer_t init(const glm::mat4 &projection) {
         glEnable(GL_DEPTH_TEST);
-        glEnable(GL_CULL_FACE);
+//        glEnable(GL_CULL_FACE);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -91,9 +92,19 @@ namespace renderer {
         model *= glm::rotate(glm::mat4(1.0), node.rotation.x, glm::vec3(1, 0, 0));
         model *= glm::scale(glm::mat4(1.0), node.scale);
 
+        auto color_rotation = glm::mat4(1.0f);
+        color_rotation *= glm::rotate(glm::mat4(1.0), node.color_rotation.z, glm::vec3(0,0,1));
+        color_rotation *= glm::rotate(glm::mat4(1.0), node.color_rotation.y, glm::vec3(0,1,0));
+        color_rotation *= glm::rotate(glm::mat4(1.0), node.color_rotation.x, glm::vec3(1,0,0));
+
         set_uniform("uModel", model);
+        set_uniform("uRainbow", (float)node.rainbow_colors);
+        set_uniform("uColorRotation", color_rotation);
+        set_uniform("uColorOffset", node.color_offset);
 
         if (!node.visible) return;
+        if(node.clipping) glEnable(GL_CLIP_DISTANCE0);
+//        if(node.show_line_mesh) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
         polygon_offset += node.polygon_offset;
         glPolygonOffset(polygon_offset.x, polygon_offset.y);
@@ -135,6 +146,10 @@ namespace renderer {
 
             mesh::draw(node.model.meshes[i]);
         }
+
+//        if(node.clipping) glDisable(GL_CLIP_DISTANCE0);
+        if(node.show_line_mesh) glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
         for (auto const &child: node.children) {
             draw(child, renderer, model, polygon_offset);
         }
@@ -142,13 +157,13 @@ namespace renderer {
 
     void render(const renderer_t &renderer,
                 const euler_camera::camera_t &camera,
-                const scene::node_t &scene, const model::model_t &skybox) {
+                const scene::node_t &scene) {
         glClearColor(0, 0, 0, 1.0);
+//        glClearColor(1, 1, 1, 1.0);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glEnable(GL_POLYGON_OFFSET_FILL);
-
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         auto view = euler_camera::get_view(camera);
-        draw_skybox(skybox, renderer, view);
 
         glUseProgram(renderer.program);
         set_uniform("uCameraPos", camera.pos);
@@ -174,7 +189,7 @@ namespace renderer {
 
         set_uniform("uNow", (float) glfwGetTime());
 
-        set_uniform("uClipPlane", renderer.clip_plane);
+//        set_uniform("uClipPlane", renderer.clip_plane);
 
         auto view_proj = renderer.projection * view;
         set_uniform("uViewProj", view_proj);
